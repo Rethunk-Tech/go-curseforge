@@ -6,4 +6,18 @@ Notable changes to `go-curseforge`. The format follows
 
 ## [Unreleased]
 
-[Unreleased]: https://github.com/Rethunk-Tech/go-curseforge/commits/main
+## [0.1.0] - 2026-10-30
+
+### Added
+
+- `Client` calls the CurseForge API with the key in a header only: `Search` (class, category, game-version and sort
+  filters), `Mod`, `Mods`, `Files`, `File`, `Description`, `Changelog`, `Classes`, `Categories` and `DownloadURL`.
+- Every answer is capped at 16 MiB, redirects to another origin are refused, and failures are
+  `httpkit.StatusError` or `httpkit.RateLimitError`; `Denied` spots a 401 or 403.
+- `Mod`, `File`, `Category` and the other response types carry the full API fields; `Mod.Restricted` reports an author
+  who forbids downloads outside CurseForge.
+- `Newest` picks a mod's newest file by release type and game version; `File.SHA1` and `File.Required` read a file.
+- `ParseLink` reads `curseforge://install` links.
+
+[Unreleased]: https://github.com/Rethunk-Tech/go-curseforge/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/Rethunk-Tech/go-curseforge/releases/tag/v0.1.0
