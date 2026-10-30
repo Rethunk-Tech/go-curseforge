@@ -6,6 +6,7 @@ import (
 	"errors"
 	"net/http"
 	"net/http/httptest"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -114,6 +115,12 @@ func TestReads(t *testing.T) {
 	files, err := c.Files(ctx, 10, FilesQuery{})
 	if err != nil || len(files.Files) != 1 || files.Files[0].SHA1() != "ab" || files.Files[0].FileLength != 2048 {
 		t.Fatalf("%+v %v", files, err)
+	}
+	if _, err := c.Files(ctx, 10, FilesQuery{GameVersion: "1.6", Index: 50}); err != nil {
+		t.Fatal(err)
+	}
+	if got := (Mod{Categories: []Category{{Name: "Items"}, {Name: "Maps"}}}).CategoryNames(); !slices.Equal(got, []string{"Items", "Maps"}) {
+		t.Fatalf("CategoryNames = %v", got)
 	}
 	if f, err := c.File(ctx, 10, 102); err != nil || f.DisplayName != "Open 2.0.zip" {
 		t.Fatalf("%+v %v", f, err)
