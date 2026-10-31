@@ -1,6 +1,7 @@
 package curseforge
 
 import (
+	"encoding/json"
 	"slices"
 	"testing"
 )
@@ -46,5 +47,25 @@ func TestFileHelpers(t *testing.T) {
 	}
 	if (File{}).SHA1() != "" || (Mod{}).Restricted() {
 		t.Fatal("empty values are neither hashed nor restricted")
+	}
+}
+
+func TestModAvailable(t *testing.T) {
+	t.Parallel()
+	for _, tc := range []struct {
+		name, body string
+		want       bool
+	}{
+		{"absent", `{"id":1}`, true},
+		{"true", `{"id":1,"isAvailable":true}`, true},
+		{"false", `{"id":1,"isAvailable":false}`, false},
+	} {
+		var m Mod
+		if err := json.Unmarshal([]byte(tc.body), &m); err != nil || m.ID != 1 {
+			t.Fatalf("%s: %v %+v", tc.name, err, m)
+		}
+		if m.Available() != tc.want || m.IsAvailable != tc.want {
+			t.Errorf("%s: Available=%v IsAvailable=%v, want %v", tc.name, m.Available(), m.IsAvailable, tc.want)
+		}
 	}
 }

@@ -1,6 +1,7 @@
 package curseforge
 
 import (
+	"encoding/json"
 	"slices"
 	"strings"
 )
@@ -76,9 +77,11 @@ type Mod struct {
 	DateReleased      string `json:"dateReleased"`
 	// AllowModDistribution is nil when the API did not say; false forbids downloads outside CurseForge.
 	AllowModDistribution *bool `json:"allowModDistribution"`
-	IsAvailable          bool  `json:"isAvailable"`
-	IsFeatured           bool  `json:"isFeatured"`
-	Links                struct {
+	// IsAvailable is what the API said, or true when it omitted the field. Use Available.
+	IsAvailable bool `json:"isAvailable"`
+	IsFeatured  bool `json:"isFeatured"`
+	available   *bool
+	Links       struct {
 		WebsiteURL string `json:"websiteUrl"`
 		WikiURL    string `json:"wikiUrl"`
 		IssuesURL  string `json:"issuesUrl"`
@@ -162,6 +165,25 @@ type Pagination struct {
 	ResultCount int `json:"resultCount"`
 	TotalCount  int `json:"totalCount"`
 }
+
+// UnmarshalJSON reads a Mod and remembers whether the API sent isAvailable.
+func (m *Mod) UnmarshalJSON(b []byte) error {
+	type plain Mod
+	aux := struct {
+		*plain
+		IsAvailable *bool `json:"isAvailable"`
+	}{plain: (*plain)(m)}
+	if err := json.Unmarshal(b, &aux); err != nil {
+		return err
+	}
+	m.available = aux.IsAvailable
+	m.IsAvailable = aux.IsAvailable == nil || *aux.IsAvailable
+	return nil
+}
+
+// Available reports that the mod can be used: false only when the API said isAvailable: false. A mod built in code
+// without that answer is available.
+func (m Mod) Available() bool { return m.available == nil || *m.available }
 
 // Restricted reports that the author forbids downloads outside CurseForge. An unknown flag is not restricted.
 func (m Mod) Restricted() bool { return m.AllowModDistribution != nil && !*m.AllowModDistribution }

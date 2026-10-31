@@ -68,6 +68,7 @@ func main() {
 | `Mods` | One POST for all ids; the API caps the batch, so split long lists. Unknown ids are absent. |
 | `DownloadURL` | A 403 (see `Denied`) or an empty address means the author forbids third-party downloads; the empty case is `ErrNoDownload`. |
 | `Mod.Restricted` | True only when the API said `allowModDistribution: false`; unknown is not restricted. |
+| `Mod.Available` | False only when the API said `isAvailable: false`; an omitted field is available. |
 | `Newest` | Skips unavailable files and, when `gameVersions` is non-empty, files for other versions. At `ReleaseStable` a stable file beats a newer beta; with none, the newest other file stands in. Higher values take the newest file up to that release type. |
 | `ParseLink` | Accepts only `curseforge://install?addonId=<n>&fileId=<n>` with positive ids; any other host, path, userinfo or fragment is refused. |
 | Descriptions, changelogs | HTML as the site stores them; this package does not sanitise or convert them. |
