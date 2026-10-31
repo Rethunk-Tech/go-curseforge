@@ -6,6 +6,16 @@ Notable changes to `go-curseforge`. The format follows
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-10-31
+
+### Added
+
+- `Mod.Available` is false only when the API said `isAvailable: false`.
+
+### Fixed
+
+- A mod whose answer omits `isAvailable` no longer reads as unavailable; `Mod.IsAvailable` is true then too.
+
 ## [0.1.0] - 2026-10-30
 
 ### Added
@@ -19,5 +29,6 @@ Notable changes to `go-curseforge`. The format follows
 - `Newest` picks a mod's newest file by release type and game version; `File.SHA1` and `File.Required` read a file.
 - `ParseLink` reads `curseforge://install` links.
 
-[Unreleased]: https://github.com/Rethunk-Tech/go-curseforge/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/Rethunk-Tech/go-curseforge/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/Rethunk-Tech/go-curseforge/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/Rethunk-Tech/go-curseforge/releases/tag/v0.1.0
