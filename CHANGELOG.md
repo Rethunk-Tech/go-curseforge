@@ -6,6 +6,12 @@ Notable changes to `go-curseforge`. The format follows
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-11-02
+
+### Added
+
+- `Uploader`, built by `NewUploader`, publishes a zip to a project through the author upload API (`X-Api-Token`, a metadata and file form) and returns the new file's id; `AuthorFilesURL` names the project's files page.
+
 ## [0.2.0] - 2026-10-31
 
 ### Added
@@ -29,6 +35,7 @@ Notable changes to `go-curseforge`. The format follows
 - `Newest` picks a mod's newest file by release type and game version; `File.SHA1` and `File.Required` read a file.
 - `ParseLink` reads `curseforge://install` links.
 
-[Unreleased]: https://github.com/Rethunk-Tech/go-curseforge/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/Rethunk-Tech/go-curseforge/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/Rethunk-Tech/go-curseforge/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/Rethunk-Tech/go-curseforge/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/Rethunk-Tech/go-curseforge/releases/tag/v0.1.0

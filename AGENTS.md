@@ -2,7 +2,7 @@
 
 Package `curseforge` is a client for the CurseForge Core API (v1): search, mods, files, categories, download
 addresses and `curseforge://install` links. Mod managers and update checkers import it. It imports no consumer package
-and does no file I/O; caches, search merging, scoring and any wording a person reads belong to the caller.
+and reads a file only to upload it (`Uploader`); caches, search merging, scoring and any wording a person reads belong to the caller.
 
 ## Gate
 
