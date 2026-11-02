@@ -2,7 +2,6 @@ package curseforge
 
 import (
 	"bytes"
-	"context"
 	"errors"
 	"net/http"
 	"net/http/httptest"
@@ -87,21 +86,21 @@ func fake(t *testing.T) *Client {
 
 func TestSearchSendsFiltersAndReadsPagination(t *testing.T) {
 	t.Parallel()
-	res, err := fake(t).Search(context.Background(), SearchQuery{
+	res, err := fake(t).Search(t.Context(), SearchQuery{
 		GameID: 669, ClassID: 4643, CategoryIDs: []int{6412, 6420}, GameVersion: "1.6", Text: "cp",
 		SortField: SortTotalDownloads, Ascending: true, Index: 20, PageSize: 20,
 	})
 	if err != nil || res.Pagination.TotalCount != 41 || len(res.Mods) != 1 || len(res.Mods[0].LatestFiles) != 1 {
 		t.Fatalf("%+v %v", res, err)
 	}
-	if _, err := fake(t).Search(context.Background(), SearchQuery{GameID: 1, Index: MaxWindow - 10}); !errors.Is(err, ErrBeyondWindow) {
+	if _, err := fake(t).Search(t.Context(), SearchQuery{GameID: 1, Index: MaxWindow - 10}); !errors.Is(err, ErrBeyondWindow) {
 		t.Fatalf("past the window: %v", err)
 	}
 }
 
 func TestReads(t *testing.T) {
 	t.Parallel()
-	c, ctx := fake(t), context.Background()
+	c, ctx := fake(t), t.Context()
 	m, err := c.Mod(ctx, 10)
 	if err != nil || m.Name != "Open Mod" || m.GameID != 669 || m.Restricted() {
 		t.Fatalf("%+v %v", m, err)
@@ -144,7 +143,7 @@ func TestReads(t *testing.T) {
 
 func TestDownloadURL(t *testing.T) {
 	t.Parallel()
-	c, ctx := fake(t), context.Background()
+	c, ctx := fake(t), t.Context()
 	if u, err := c.DownloadURL(ctx, 10, 102); err != nil || u != "https://edge/open-2.0.zip" {
 		t.Fatalf("%q %v", u, err)
 	}
@@ -159,15 +158,15 @@ func TestDownloadURL(t *testing.T) {
 func TestErrors(t *testing.T) {
 	t.Parallel()
 	c := fake(t)
-	if _, err := c.Mod(context.Background(), 99); !errors.Is(err, httpkit.ErrNotFound) || Denied(err) {
+	if _, err := c.Mod(t.Context(), 99); !errors.Is(err, httpkit.ErrNotFound) || Denied(err) {
 		t.Fatalf("404: %v", err)
 	}
 	rl := &httpkit.RateLimitError{}
-	err := c.get(context.Background(), "/limited", nil, &struct{}{})
+	err := c.get(t.Context(), "/limited", nil, &struct{}{})
 	if !errors.As(err, &rl) || rl.Reset.Before(time.Now().Add(time.Minute)) {
 		t.Fatalf("429: %v", err)
 	}
-	if _, err := New(Config{}).Mod(context.Background(), 1); !errors.Is(err, ErrNoKey) {
+	if _, err := New(Config{}).Mod(t.Context(), 1); !errors.Is(err, ErrNoKey) {
 		t.Fatalf("no key: %v", err)
 	}
 }
@@ -182,7 +181,7 @@ func TestKeyStaysOffErrorsAndOtherOrigins(t *testing.T) {
 		http.Redirect(w, r, other.URL, http.StatusFound)
 	}))
 	t.Cleanup(srv.Close)
-	_, err := New(Config{APIKey: "secret-key", BaseURL: srv.URL}).Mod(context.Background(), 1)
+	_, err := New(Config{APIKey: "secret-key", BaseURL: srv.URL}).Mod(t.Context(), 1)
 	if err == nil || strings.Contains(err.Error(), "secret-key") {
 		t.Fatalf("redirect must fail without the key in the error: %v", err)
 	}
@@ -196,7 +195,7 @@ func TestOversizedAnswerIsRefused(t *testing.T) {
 		_, _ = w.Write([]byte(`"}`))
 	}))
 	t.Cleanup(srv.Close)
-	if _, err := New(Config{APIKey: "k", BaseURL: srv.URL}).Description(context.Background(), 1); !errors.Is(err, safefs.ErrTooLarge) {
+	if _, err := New(Config{APIKey: "k", BaseURL: srv.URL}).Description(t.Context(), 1); !errors.Is(err, safefs.ErrTooLarge) {
 		t.Fatalf("an answer over the cap: %v", err)
 	}
 }

@@ -2,7 +2,6 @@ package curseforge
 
 import (
 	"bytes"
-	"context"
 	"io"
 	"net/http"
 	"testing"
@@ -23,7 +22,7 @@ func FuzzDecoders(f *testing.F) {
 	f.Add([]byte(`{`))
 	f.Fuzz(func(t *testing.T, body []byte) {
 		c := New(Config{APIKey: "k", BaseURL: "http://curseforge.test", HTTP: &http.Client{Transport: canned(body)}})
-		ctx := context.Background()
+		ctx := t.Context()
 		_, _ = c.Search(ctx, SearchQuery{GameID: 1})
 		m, _ := c.Mod(ctx, 1)
 		_ = m.Restricted()
