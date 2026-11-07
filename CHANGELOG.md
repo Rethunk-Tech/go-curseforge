@@ -6,6 +6,8 @@ Notable changes to `go-curseforge`. The format follows
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-11-07
+
 ### Added
 
 - `CheckDownloadURL` and `ErrInsecureURL`.
@@ -48,7 +50,8 @@ Notable changes to `go-curseforge`. The format follows
 - `Newest` picks a mod's newest file by release type and game version; `File.SHA1` and `File.Required` read a file.
 - `ParseLink` reads `curseforge://install` links.
 
-[Unreleased]: https://github.com/Rethunk-Tech/go-curseforge/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/Rethunk-Tech/go-curseforge/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/Rethunk-Tech/go-curseforge/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/Rethunk-Tech/go-curseforge/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/Rethunk-Tech/go-curseforge/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/Rethunk-Tech/go-curseforge/releases/tag/v0.1.0
