@@ -3,6 +3,7 @@ package curseforge
 import (
 	"bytes"
 	"errors"
+	"math"
 	"net/http"
 	"net/http/httptest"
 	"slices"
@@ -197,5 +198,39 @@ func TestOversizedAnswerIsRefused(t *testing.T) {
 	t.Cleanup(srv.Close)
 	if _, err := New(Config{APIKey: "k", BaseURL: srv.URL}).Description(t.Context(), 1); !errors.Is(err, safefs.ErrTooLarge) {
 		t.Fatalf("an answer over the cap: %v", err)
+	}
+}
+
+func TestSearchWindowGuardDoesNotOverflow(t *testing.T) {
+	_, err := fake(t).Search(t.Context(), SearchQuery{GameID: 1, Index: math.MaxInt - 10})
+	if !errors.Is(err, ErrBeyondWindow) {
+		t.Fatalf("overflowing index: %v", err)
+	}
+}
+
+func TestCheckDownloadURLRequiresHTTPSWithoutCredentials(t *testing.T) {
+	for _, bad := range []string{"http://edge.example/a.zip", "ftp://x/a", "https://u:p@edge.example/a.zip", "https:///a", "//edge/a", "a.zip", "https://%zz"} {
+		if _, err := CheckDownloadURL(bad); !errors.Is(err, ErrInsecureURL) {
+			t.Errorf("%q: %v", bad, err)
+		}
+	}
+	if got, err := CheckDownloadURL("https://edge.example/a.zip"); err != nil || got != "https://edge.example/a.zip" {
+		t.Fatalf("https refused: %q, %v", got, err)
+	}
+}
+
+func TestPlainHTTPBaseIsRefusedExceptOnLoopback(t *testing.T) {
+	for _, base := range []string{"http://api.example/v1", "ftp://api.example", "https://u:p@api.example"} {
+		if _, err := New(Config{APIKey: "k", BaseURL: base}).Classes(t.Context(), 1); !errors.Is(err, ErrInsecureURL) {
+			t.Errorf("%q: %v", base, err)
+		}
+		if _, err := NewUploader(UploadConfig{Token: "t", BaseURL: base}).Upload(t.Context(), "x.zip", 1, "n", "c"); !errors.Is(err, ErrInsecureURL) {
+			t.Errorf("upload %q: %v", base, err)
+		}
+	}
+	for _, base := range []string{"http://127.0.0.1:1", "http://localhost:1", "http://[::1]:1"} {
+		if err := checkBase(base); err != nil {
+			t.Errorf("%q: %v", base, err)
+		}
 	}
 }

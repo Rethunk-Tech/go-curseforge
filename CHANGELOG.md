@@ -6,6 +6,19 @@ Notable changes to `go-curseforge`. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- `CheckDownloadURL` and `ErrInsecureURL`.
+
+### Changed
+
+- `DownloadURL` returns `ErrInsecureURL` for an address that is not https or carries credentials. `File.DownloadURL` is still the API's text; pass it to `CheckDownloadURL` and verify the download against `File.Hashes`.
+- A `Client` or `Uploader` whose base URL is not https (loopback http excepted) fails every call with `ErrInsecureURL`, so the key or token is never sent in the clear.
+
+### Fixed
+
+- `Search` compared `Index+PageSize` to the window with an addition that could wrap; a huge `Index` now returns `ErrBeyondWindow`.
+
 ## [0.3.0] - 2026-11-02
 
 ### Added

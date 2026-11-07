@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -39,6 +40,9 @@ var (
 	// ErrNoDownload means the API gave no download address for a file: its author forbids downloads outside
 	// CurseForge.
 	ErrNoDownload = errors.New("curseforge: file has no download address")
+	// ErrInsecureURL means an address is not an https URL, or carries credentials; nothing is sent to it. A base
+	// URL may be plain http only on a loopback host, which tests use.
+	ErrInsecureURL = errors.New("curseforge: not an https URL")
 )
 
 // Config is what a Client is built from.
@@ -82,6 +86,9 @@ func Denied(err error) bool {
 func (c *Client) do(ctx context.Context, method, path string, params url.Values, body, out any) error {
 	if c.key == "" {
 		return ErrNoKey
+	}
+	if err := checkBase(c.base); err != nil {
+		return err
 	}
 	ctx, cancel := context.WithTimeout(ctx, requestTimeout)
 	defer cancel()
@@ -160,7 +167,7 @@ type SearchResult struct {
 // Search lists mods. A ClassID restricts the search to that class.
 func (c *Client) Search(ctx context.Context, q SearchQuery) (SearchResult, error) {
 	size := cmp.Or(q.PageSize, MaxPageSize)
-	if q.Index < 0 || size < 0 || q.Index+size > MaxWindow {
+	if q.Index < 0 || size < 0 || q.Index > MaxWindow-size {
 		return SearchResult{}, ErrBeyondWindow
 	}
 	params := url.Values{}
@@ -266,10 +273,43 @@ func (c *Client) Changelog(ctx context.Context, modID, fileID int) (string, erro
 // downloads outside CurseForge; the empty answer is ErrNoDownload.
 func (c *Client) DownloadURL(ctx context.Context, modID, fileID int) (string, error) {
 	link, err := c.text(ctx, fileBase(modID, fileID)+"/download-url")
-	if err == nil && link == "" {
+	if err != nil {
+		return "", err
+	}
+	if link == "" {
 		return "", ErrNoDownload
 	}
-	return link, err
+	return CheckDownloadURL(link)
+}
+
+// CheckDownloadURL returns link when it is an https URL with a host and no credentials, else ErrInsecureURL. A
+// caller that fetches File.DownloadURL, which the API fills in unchecked, passes it here first, and verifies the
+// download against File.Hashes (see SHA1).
+func CheckDownloadURL(link string) (string, error) {
+	u, err := url.Parse(link)
+	if err != nil || u.Scheme != "https" || u.Host == "" || u.User != nil {
+		return "", ErrInsecureURL
+	}
+	return link, nil
+}
+
+// checkBase refuses an API or upload origin that would send the key or token in the clear: https, or http to a
+// loopback host.
+func checkBase(base string) error {
+	u, err := url.Parse(base)
+	if err != nil || u.Host == "" || u.User != nil {
+		return ErrInsecureURL
+	}
+	switch u.Scheme {
+	case "https":
+		return nil
+	case "http":
+		host := u.Hostname()
+		if ip := net.ParseIP(host); host == "localhost" || ip != nil && ip.IsLoopback() {
+			return nil
+		}
+	}
+	return ErrInsecureURL
 }
 
 // Classes lists a game's classes (top-level kinds of content, such as "Mods").

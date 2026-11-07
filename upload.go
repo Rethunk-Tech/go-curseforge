@@ -64,6 +64,9 @@ func (u *Uploader) Upload(ctx context.Context, path string, projectID int, displ
 	if u.base == "" {
 		return 0, errors.New("curseforge: no upload host")
 	}
+	if err := checkBase(u.base); err != nil {
+		return 0, err
+	}
 	f, err := safefs.OpenRegular(path)
 	if err != nil {
 		return 0, err
