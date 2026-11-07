@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"slices"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -231,6 +232,35 @@ func TestPlainHTTPBaseIsRefusedExceptOnLoopback(t *testing.T) {
 	for _, base := range []string{"http://127.0.0.1:1", "http://localhost:1", "http://[::1]:1"} {
 		if err := checkBase(base); err != nil {
 			t.Errorf("%q: %v", base, err)
+		}
+	}
+}
+
+// The API fills the address in, and the caller fetches it: a plain-http or credentialed address must not come back
+// as a download link, even when the API itself is reached over loopback http.
+func TestDownloadURLRefusesWhatIsNotAnHTTPSAddress(t *testing.T) {
+	t.Parallel()
+	answers := map[string]string{
+		"1": "http://edge.example/a.zip", "2": "ftp://edge.example/a.zip", "3": "https://" + "u" + ":" + "p" + "@edge.example/a.zip",
+		"4": "https:///a.zip", "5": "https://edge.example/a.zip",
+	}
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		id := strings.TrimSuffix(strings.TrimPrefix(r.URL.Path, "/mods/10/files/"), "/download-url")
+		_, _ = w.Write([]byte(`{"data":"` + answers[id] + `"}`))
+	}))
+	t.Cleanup(srv.Close)
+	c := New(Config{APIKey: "k", BaseURL: srv.URL})
+	for id, link := range answers {
+		fileID, _ := strconv.Atoi(id)
+		got, err := c.DownloadURL(t.Context(), 10, fileID)
+		if id == "5" {
+			if err != nil || got != link {
+				t.Errorf("https address: %q, %v", got, err)
+			}
+			continue
+		}
+		if err == nil {
+			t.Errorf("%q came back as a download link", link)
 		}
 	}
 }
