@@ -215,6 +215,9 @@ func (c *Client) Mod(ctx context.Context, id int) (Mod, error) {
 // Mods reads many projects with their latest files in one request (POST /mods). The API caps the batch; split long
 // lists. A mod the API does not know is absent from the answer.
 func (c *Client) Mods(ctx context.Context, ids []int) ([]Mod, error) {
+	if len(ids) == 0 {
+		return nil, nil
+	}
 	var out struct {
 		Data []Mod `json:"data"`
 	}

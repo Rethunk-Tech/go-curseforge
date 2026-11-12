@@ -215,6 +215,17 @@ func TestFilesRejectsANegativeIndex(t *testing.T) {
 	}
 }
 
+func TestModsEmptyListMakesNoCall(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(_ http.ResponseWriter, _ *http.Request) {
+		t.Error("POST /mods with no ids")
+	}))
+	t.Cleanup(srv.Close)
+	mods, err := New(Config{APIKey: "k", BaseURL: srv.URL}).Mods(t.Context(), nil)
+	if err != nil || mods != nil {
+		t.Fatalf("mods=%v err=%v", mods, err)
+	}
+}
+
 func TestCheckDownloadURLRequiresHTTPSWithoutCredentials(t *testing.T) {
 	for _, bad := range []string{"http://edge.example/a.zip", "ftp://x/a", "https://u:p@edge.example/a.zip", "https:///a", "//edge/a", "a.zip", "https://%zz"} {
 		if _, err := CheckDownloadURL(bad); !errors.Is(err, ErrInsecureURL) {
