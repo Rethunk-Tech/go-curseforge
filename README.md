@@ -31,6 +31,7 @@ A worked example and the contracts: [HUMANS.md](HUMANS.md).
 - `Client.DownloadURL` and `Mod.Restricted` tell a distributable file from one the author keeps on CurseForge.
 - Typed errors: `httpkit.StatusError` (404 matches `httpkit.ErrNotFound`) and `httpkit.RateLimitError` with `Retry-After`.
 - `ParseLink` reads `curseforge://install` links; `Newest` picks a mod's newest file by release channel.
+- `Uploader`, built by `NewUploader`, publishes a zip to a project through the author upload API (`X-Api-Token`); `AuthorFilesURL` names the project's files page.
 
 ## Documentation
 

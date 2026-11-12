@@ -1,7 +1,7 @@
 # AGENTS.md
 
 Package `curseforge` is a client for the CurseForge Core API (v1): search, mods, files, categories, download
-addresses and `curseforge://install` links. Mod managers and update checkers import it. It imports no consumer package
+addresses, `curseforge://install` links, and author-site upload (`Uploader`, `NewUploader`, `AuthorFilesURL`). Mod managers and update checkers import it. It imports no consumer package
 and reads a file only to upload it (`Uploader`); caches, search merging, scoring and any wording a person reads belong to the caller.
 
 ## Gate
@@ -24,9 +24,12 @@ cannot resolve that check from PATH.
 - `Newest` takes the release type as the API's own numbers (`ReleaseStable`..`ReleaseAlpha`) so the package carries no
   consumer channel vocabulary.
 
-##| File | Holds |
+## Files
+
+| File | Holds |
 | --- | --- |
 | `doc.go` | Package doc |
 | `client.go` | `Client`, `Config`, `do`, and every API call |
 | `types.go` | Response types, constants (sort, release, relation, hash, status), `Newest` and the file helpers |
 | `link.go` | `ParseLink`, `Ref` |
+| `upload.go` | `Uploader`, `NewUploader`, `AuthorFilesURL` |

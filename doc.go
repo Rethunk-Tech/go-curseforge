@@ -1,5 +1,6 @@
 // Package curseforge is a client for the CurseForge Core API (v1): mod search, mods, files, categories and
-// classes, download addresses, and curseforge:// install links.
+// classes, download addresses, curseforge:// install links, and author-site upload (Uploader, NewUploader,
+// AuthorFilesURL).
 //
 // The API key rides in the X-Api-Key header only, so no error or log line quotes it. A file whose author forbids
 // distribution outside CurseForge has no download address; Mod.Restricted and the ErrNoDownload result of

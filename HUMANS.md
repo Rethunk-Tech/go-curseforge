@@ -12,46 +12,46 @@ go get github.com/Rethunk-Tech/go-curseforge
 package main
 
 import (
-	"context"
-	"errors"
-	"fmt"
-	"net/http"
-	"os"
+ "context"
+ "errors"
+ "fmt"
+ "net/http"
+ "os"
 
-	"github.com/Rethunk-Tech/go-curseforge"
-	"github.com/Rethunk-Tech/go-httpkit"
+ "github.com/Rethunk-Tech/go-curseforge"
+ "github.com/Rethunk-Tech/go-httpkit"
 )
 
 func main() {
-	c := curseforge.New(curseforge.Config{
-		APIKey:    os.Getenv("CURSEFORGE_API_KEY"),
-		HTTP:      &http.Client{Transport: &httpkit.Transport{UserAgent: "MyApp/1.0.0"}},
-		UserAgent: "MyApp/1.0.0",
-	})
-	ctx := context.Background()
+ c := curseforge.New(curseforge.Config{
+  APIKey:    os.Getenv("CURSEFORGE_API_KEY"),
+  HTTP:      &http.Client{Transport: &httpkit.Transport{UserAgent: "MyApp/1.0.0"}},
+  UserAgent: "MyApp/1.0.0",
+ })
+ ctx := context.Background()
 
-	res, err := c.Search(ctx, curseforge.SearchQuery{
-		GameID: 669, ClassID: 4643, Text: "content patcher", SortField: curseforge.SortTotalDownloads,
-	})
-	if err != nil || len(res.Mods) == 0 {
-		fmt.Println(res.Pagination.TotalCount, err)
-		return
-	}
-	mod := res.Mods[0]
-	file, ok := curseforge.Newest(mod.LatestFiles, nil, curseforge.ReleaseStable)
-	if !ok || mod.Restricted() {
-		fmt.Println(mod.Name, "must be downloaded from", mod.Links.WebsiteURL)
-		return
-	}
-	link := file.DownloadURL
-	if link == "" {
-		link, err = c.DownloadURL(ctx, mod.ID, file.ID)
-	}
-	if errors.Is(err, curseforge.ErrNoDownload) || curseforge.Denied(err) {
-		fmt.Println(mod.Name, "must be downloaded from", mod.Links.WebsiteURL)
-		return
-	}
-	fmt.Println(file.FileName, file.SHA1(), link, err)
+ res, err := c.Search(ctx, curseforge.SearchQuery{
+  GameID: 669, ClassID: 4643, Text: "content patcher", SortField: curseforge.SortTotalDownloads,
+ })
+ if err != nil || len(res.Mods) == 0 {
+  fmt.Println(res.Pagination.TotalCount, err)
+  return
+ }
+ mod := res.Mods[0]
+ file, ok := curseforge.Newest(mod.LatestFiles, nil, curseforge.ReleaseStable)
+ if !ok || mod.Restricted() {
+  fmt.Println(mod.Name, "must be downloaded from", mod.Links.WebsiteURL)
+  return
+ }
+ link := file.DownloadURL
+ if link == "" {
+  link, err = c.DownloadURL(ctx, mod.ID, file.ID)
+ }
+ if errors.Is(err, curseforge.ErrNoDownload) || curseforge.Denied(err) {
+  fmt.Println(mod.Name, "must be downloaded from", mod.Links.WebsiteURL)
+  return
+ }
+ fmt.Println(file.FileName, file.SHA1(), link, err)
 }
 ```
 
@@ -71,6 +71,7 @@ func main() {
 | `Mod.Available` | False only when the API said `isAvailable: false`; an omitted field is available. |
 | `Newest` | Skips unavailable files and, when `gameVersions` is non-empty, files for other versions. At `ReleaseStable` a stable file beats a newer beta; with none, the newest other file stands in. Higher values take the newest file up to that release type. |
 | `ParseLink` | Accepts only `curseforge://install?addonId=<n>&fileId=<n>` with positive ids; any other host, path, userinfo or fragment is refused. |
+| `Uploader` | `NewUploader` publishes a zip through the author upload API (`X-Api-Token`, not the API key) and returns the new file's id; `AuthorFilesURL` names the project's files page. |
 | Descriptions, changelogs | HTML as the site stores them; this package does not sanitise or convert them. |
 | Mod files | Never fetched or written by this package. |
 
