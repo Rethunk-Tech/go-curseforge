@@ -13,6 +13,26 @@ func (c canned) RoundTrip(*http.Request) (*http.Response, error) {
 	return &http.Response{StatusCode: http.StatusOK, Body: io.NopCloser(bytes.NewReader(c)), Header: http.Header{}}, nil
 }
 
+func TestFuzzDecodersReachTheTransport(t *testing.T) {
+	var n int
+	rt := roundTripCount{n: &n, RoundTripper: canned([]byte(`{"data":null}`))}
+	c := New(Config{APIKey: "k", BaseURL: "http://127.0.0.1", HTTP: &http.Client{Transport: rt}})
+	_, _ = c.Mod(t.Context(), 1)
+	if n == 0 {
+		t.Fatal("RoundTrip never ran")
+	}
+}
+
+type roundTripCount struct {
+	n *int
+	http.RoundTripper
+}
+
+func (r roundTripCount) RoundTrip(req *http.Request) (*http.Response, error) {
+	*r.n++
+	return r.RoundTripper.RoundTrip(req)
+}
+
 // FuzzDecoders holds that no answer body makes any call panic.
 func FuzzDecoders(f *testing.F) {
 	f.Add([]byte(`{"data":[{"id":1,"name":"T","latestFiles":[{"id":2,"isAvailable":true,"hashes":[{"value":"ab","algo":1}],"dependencies":[{"modId":3,"relationType":3}]}]}],"pagination":{"totalCount":1}}`))
@@ -21,7 +41,7 @@ func FuzzDecoders(f *testing.F) {
 	f.Add([]byte(`{"data":null}`))
 	f.Add([]byte(`{`))
 	f.Fuzz(func(t *testing.T, body []byte) {
-		c := New(Config{APIKey: "k", BaseURL: "http://curseforge.test", HTTP: &http.Client{Transport: canned(body)}})
+		c := New(Config{APIKey: "k", BaseURL: "http://127.0.0.1", HTTP: &http.Client{Transport: canned(body)}})
 		ctx := t.Context()
 		_, _ = c.Search(ctx, SearchQuery{GameID: 1})
 		m, _ := c.Mod(ctx, 1)
