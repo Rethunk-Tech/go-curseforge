@@ -243,7 +243,11 @@ type FilesResult struct {
 
 // Files lists a project's files. A zero PageSize is 50, the API's maximum.
 func (c *Client) Files(ctx context.Context, modID int, q FilesQuery) (FilesResult, error) {
-	params := url.Values{"pageSize": {strconv.Itoa(cmp.Or(q.PageSize, MaxPageSize))}}
+	size := cmp.Or(q.PageSize, MaxPageSize)
+	if q.Index < 0 || size < 0 || q.Index > MaxWindow-size {
+		return FilesResult{}, ErrBeyondWindow
+	}
+	params := url.Values{"pageSize": {strconv.Itoa(size)}}
 	if q.GameVersion != "" {
 		params.Set("gameVersion", q.GameVersion)
 	}

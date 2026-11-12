@@ -209,6 +209,12 @@ func TestSearchWindowGuardDoesNotOverflow(t *testing.T) {
 	}
 }
 
+func TestFilesRejectsANegativeIndex(t *testing.T) {
+	if _, err := fake(t).Files(t.Context(), 10, FilesQuery{Index: -1}); !errors.Is(err, ErrBeyondWindow) {
+		t.Fatalf("negative index: %v", err)
+	}
+}
+
 func TestCheckDownloadURLRequiresHTTPSWithoutCredentials(t *testing.T) {
 	for _, bad := range []string{"http://edge.example/a.zip", "ftp://x/a", "https://u:p@edge.example/a.zip", "https:///a", "//edge/a", "a.zip", "https://%zz"} {
 		if _, err := CheckDownloadURL(bad); !errors.Is(err, ErrInsecureURL) {
