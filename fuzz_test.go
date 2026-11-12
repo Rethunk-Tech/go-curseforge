@@ -42,3 +42,28 @@ func FuzzDecoders(f *testing.F) {
 		_, _ = c.Categories(ctx, 1, 2)
 	})
 }
+
+// FuzzModUnmarshalJSON holds that a decoded Mod panics on nothing and that Restricted
+// and Available match the documented flag rules.
+func FuzzModUnmarshalJSON(f *testing.F) {
+	f.Add([]byte(`{"id":1,"allowModDistribution":false}`))
+	f.Add([]byte(`{"id":1,"isAvailable":false}`))
+	f.Add([]byte(`{"id":1,"isAvailable":true,"allowModDistribution":true}`))
+	f.Add([]byte(`{"id":1}`))
+	f.Add([]byte(`{"data":null}`))
+	f.Add([]byte(`{`))
+	f.Add([]byte(`null`))
+	f.Add([]byte(`[]`))
+	f.Fuzz(func(t *testing.T, b []byte) {
+		var m Mod
+		if err := m.UnmarshalJSON(b); err != nil {
+			return
+		}
+		if m.Restricted() && (m.AllowModDistribution == nil || *m.AllowModDistribution) {
+			t.Fatalf("Restricted with allow=%v", m.AllowModDistribution)
+		}
+		if !m.Available() && (m.available == nil || *m.available) {
+			t.Fatalf("unavailable without isAvailable:false")
+		}
+	})
+}
