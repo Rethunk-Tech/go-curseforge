@@ -294,7 +294,7 @@ func (c *Client) DownloadURL(ctx context.Context, modID, fileID int) (string, er
 // download against File.Hashes (see SHA1).
 func CheckDownloadURL(link string) (string, error) {
 	u, err := url.Parse(link)
-	if err != nil || u.Scheme != "https" || u.Host == "" || u.User != nil {
+	if err != nil || u.Scheme != "https" || u.Hostname() == "" || u.User != nil {
 		return "", ErrInsecureURL
 	}
 	return link, nil
@@ -304,7 +304,7 @@ func CheckDownloadURL(link string) (string, error) {
 // loopback host.
 func checkBase(base string) error {
 	u, err := url.Parse(base)
-	if err != nil || u.Host == "" || u.User != nil {
+	if err != nil || u.Hostname() == "" || u.User != nil {
 		return ErrInsecureURL
 	}
 	switch u.Scheme {

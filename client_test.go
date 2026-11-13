@@ -227,7 +227,7 @@ func TestModsEmptyListMakesNoCall(t *testing.T) {
 }
 
 func TestCheckDownloadURLRequiresHTTPSWithoutCredentials(t *testing.T) {
-	for _, bad := range []string{"http://edge.example/a.zip", "ftp://x/a", "https://u:p@edge.example/a.zip", "https:///a", "//edge/a", "a.zip", "https://%zz"} {
+	for _, bad := range []string{"http://edge.example/a.zip", "ftp://x/a", "https://u:p@edge.example/a.zip", "https:///a", "https://:443/a.zip", "//edge/a", "a.zip", "https://%zz"} {
 		if _, err := CheckDownloadURL(bad); !errors.Is(err, ErrInsecureURL) {
 			t.Errorf("%q: %v", bad, err)
 		}
@@ -238,7 +238,7 @@ func TestCheckDownloadURLRequiresHTTPSWithoutCredentials(t *testing.T) {
 }
 
 func TestPlainHTTPBaseIsRefusedExceptOnLoopback(t *testing.T) {
-	for _, base := range []string{"http://api.example/v1", "ftp://api.example", "https://u:p@api.example"} {
+	for _, base := range []string{"http://api.example/v1", "ftp://api.example", "https://u:p@api.example", "https://:443"} {
 		if _, err := New(Config{APIKey: "k", BaseURL: base}).Classes(t.Context(), 1); !errors.Is(err, ErrInsecureURL) {
 			t.Errorf("%q: %v", base, err)
 		}
