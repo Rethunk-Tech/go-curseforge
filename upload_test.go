@@ -9,6 +9,7 @@ import (
 	"net/http/httptest"
 	"path/filepath"
 	"testing"
+	"time"
 
 	"github.com/Rethunk-Tech/go-httpkit"
 	"github.com/Rethunk-Tech/go-safefs"
@@ -83,5 +84,15 @@ func TestUploadNeedsATokenAndAHost(t *testing.T) {
 	}
 	if _, err := NewUploader(UploadConfig{Token: "t"}).Upload(t.Context(), "p", 1, "n", ""); err == nil {
 		t.Error("no host accepted")
+	}
+}
+
+func TestUploadTimeoutGrowsWithSize(t *testing.T) {
+	t.Parallel()
+	if got := uploadTimeout(0); got != 30*time.Second {
+		t.Fatalf("empty file: %v", got)
+	}
+	if got := uploadTimeout(128 << 20); got != 30*time.Second+1024*time.Second {
+		t.Fatalf("128 MiB: %v", got)
 	}
 }

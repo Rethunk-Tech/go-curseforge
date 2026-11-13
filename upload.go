@@ -12,6 +12,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/Rethunk-Tech/go-httpkit"
 	"github.com/Rethunk-Tech/go-safefs"
@@ -55,6 +56,14 @@ func AuthorFilesURL(projectID int) string {
 	return "https://authors.curseforge.com/#/projects/" + strconv.Itoa(projectID) + "/files"
 }
 
+// uploadTimeout bounds one upload: a fixed allowance plus time for size bytes at a slow uplink.
+func uploadTimeout(size int64) time.Duration {
+	return 30*time.Second + time.Duration(size/minUploadRate)*time.Second
+}
+
+// minUploadRate is the slowest uplink, in bytes per second, an upload is still given time for.
+const minUploadRate = 128 << 10
+
 // Upload sends the zip at path to the project as a release named displayName, with changelog as markdown, and returns
 // the new file's id. A 401 or 403 is a *httpkit.StatusError that Denied matches, and a 429 a *httpkit.RateLimitError.
 func (u *Uploader) Upload(ctx context.Context, path string, projectID int, displayName, changelog string) (int, error) {
@@ -72,6 +81,12 @@ func (u *Uploader) Upload(ctx context.Context, path string, projectID int, displ
 		return 0, err
 	}
 	defer func() { _ = f.Close() }()
+	info, err := f.Stat()
+	if err != nil {
+		return 0, err
+	}
+	ctx, cancel := context.WithTimeout(ctx, uploadTimeout(info.Size()))
+	defer cancel()
 	meta, err := json.Marshal(map[string]any{
 		"changelog": changelog, "changelogType": "markdown", "releaseType": "release", "displayName": displayName,
 	})
