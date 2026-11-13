@@ -10,6 +10,9 @@ func TestParseLink(t *testing.T) {
 	if ref, err := ParseLink("curseforge://install?addonId=309243&fileId=555"); err != nil || ref != (Ref{Project: 309243, File: 555}) {
 		t.Fatalf("%+v %v", ref, err)
 	}
+	if ref, err := ParseLink("CurseForge://Install?addonId=1&fileId=2"); err != nil || ref != (Ref{Project: 1, File: 2}) {
+		t.Fatalf("mixed case: %+v %v", ref, err)
+	}
 	for _, bad := range []string{
 		"", "curseforge://install", "curseforge://install?addonId=1", "curseforge://install?addonId=0&fileId=2",
 		"curseforge://install?addonId=-1&fileId=2", "curseforge://install?addonId=x&fileId=2",

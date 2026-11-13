@@ -4,6 +4,7 @@ import (
 	"errors"
 	"net/url"
 	"strconv"
+	"strings"
 )
 
 // Scheme is the scheme of the site's Install button.
@@ -20,7 +21,7 @@ var errBadLink = errors.New("not a curseforge install link")
 // host, a path, userinfo or a fragment is refused. Other query keys are ignored.
 func ParseLink(raw string) (Ref, error) {
 	u, err := url.Parse(raw)
-	if err != nil || u.Scheme != Scheme || u.Host != "install" || u.User != nil || u.Fragment != "" ||
+	if err != nil || u.Scheme != Scheme || !strings.EqualFold(u.Host, "install") || u.User != nil || u.Fragment != "" ||
 		(u.Path != "" && u.Path != "/") {
 		return Ref{}, errBadLink
 	}
