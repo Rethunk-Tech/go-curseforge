@@ -6,6 +6,7 @@ import (
 	"math"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"slices"
 	"strconv"
 	"strings"
@@ -235,6 +236,36 @@ func TestCheckDownloadURLRequiresHTTPSWithoutCredentials(t *testing.T) {
 	if got, err := CheckDownloadURL("https://edge.example/a.zip"); err != nil || got != "https://edge.example/a.zip" {
 		t.Fatalf("https refused: %q, %v", got, err)
 	}
+}
+
+// FuzzCheckDownloadURL holds that an accepted address is the input itself, https, with a host and no
+// credentials, and that anything else is ErrInsecureURL with an empty result.
+func FuzzCheckDownloadURL(f *testing.F) {
+	for _, s := range []string{
+		"https://edge.example/a.zip", "https://edge/open-2.0.zip", "http://edge.example/a.zip", "ftp://x/a",
+		"https://u:p@edge.example/a.zip", "https:///a", "https://:443/a.zip", "//edge/a", "a.zip", "https://%zz", "",
+	} {
+		f.Add(s)
+	}
+	f.Fuzz(func(t *testing.T, link string) {
+		got, err := CheckDownloadURL(link)
+		if err != nil {
+			if !errors.Is(err, ErrInsecureURL) {
+				t.Fatalf("error %v, want ErrInsecureURL", err)
+			}
+			if got != "" {
+				t.Fatalf("error with result %q", got)
+			}
+			return
+		}
+		if got != link {
+			t.Fatalf("returned %q for %q", got, link)
+		}
+		u, perr := url.Parse(got)
+		if perr != nil || u.Scheme != "https" || u.Hostname() == "" || u.User != nil {
+			t.Fatalf("accepted insecure %q", got)
+		}
+	})
 }
 
 func TestPlainHTTPBaseIsRefusedExceptOnLoopback(t *testing.T) {
