@@ -36,7 +36,11 @@ func TestUploadSendsMetadataAndFileAsAForm(t *testing.T) {
 		}
 		for {
 			part, err := form.NextPart()
+			if err == io.EOF {
+				break
+			}
 			if err != nil {
+				t.Errorf("multipart: %v", err)
 				break
 			}
 			b, _ := io.ReadAll(io.LimitReader(part, 1<<20))
@@ -60,6 +64,17 @@ func TestUploadSendsMetadataAndFileAsAForm(t *testing.T) {
 	}
 	if fmt.Sprint(meta) != "map[changelog:- fixed it changelogType:markdown displayName:ShopDrop 1.2.0 releaseType:release]" {
 		t.Errorf("metadata = %v", meta)
+	}
+}
+
+func TestUploadRejectsAZeroFileID(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		_, _ = w.Write([]byte(`{"id":0}`))
+	}))
+	defer srv.Close()
+	id, err := NewUploader(UploadConfig{Token: "t", BaseURL: srv.URL, HTTP: srv.Client()}).Upload(t.Context(), writeZip(t, "x"), 1, "n", "")
+	if err == nil || id != 0 {
+		t.Fatalf("zero file id: id=%d err=%v", id, err)
 	}
 }
 

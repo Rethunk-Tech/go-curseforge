@@ -210,9 +210,104 @@ func TestSearchWindowGuardDoesNotOverflow(t *testing.T) {
 	}
 }
 
+func TestSearchOmitsZeroFiltersAndAllowsTheWindowEdge(t *testing.T) {
+	t.Parallel()
+	n := 0
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		n++
+		q := r.URL.Query()
+		if _, ok := q["classId"]; ok {
+			t.Errorf("classId sent: %v", q)
+		}
+		if _, ok := q["sortField"]; ok {
+			t.Errorf("sortField sent: %v", q)
+		}
+		if _, ok := q["categoryIds"]; ok {
+			t.Errorf("categoryIds sent: %v", q)
+		}
+		switch n {
+		case 1:
+			if q.Get("index") != "0" || q.Get("pageSize") != strconv.Itoa(MaxPageSize) {
+				t.Errorf("first page %v", q)
+			}
+		case 2:
+			if q.Get("index") != strconv.Itoa(MaxWindow-MaxPageSize) {
+				t.Errorf("window edge %v", q)
+			}
+		}
+		_, _ = w.Write([]byte(`{"data":[],"pagination":{}}`))
+	}))
+	t.Cleanup(srv.Close)
+	c := New(Config{APIKey: "k", BaseURL: srv.URL})
+	if _, err := c.Search(t.Context(), SearchQuery{GameID: 669}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := c.Search(t.Context(), SearchQuery{GameID: 669, Index: MaxWindow - MaxPageSize}); err != nil {
+		t.Fatalf("index at the window edge: %v", err)
+	}
+	if _, err := c.Search(t.Context(), SearchQuery{GameID: 669, Index: MaxWindow - MaxPageSize + 1}); !errors.Is(err, ErrBeyondWindow) {
+		t.Fatalf("one past the edge: %v", err)
+	}
+}
+
 func TestFilesRejectsANegativeIndex(t *testing.T) {
 	if _, err := fake(t).Files(t.Context(), 10, FilesQuery{Index: -1}); !errors.Is(err, ErrBeyondWindow) {
 		t.Fatalf("negative index: %v", err)
+	}
+}
+
+func TestFilesOmitsAZeroIndexAndGuardsTheWindow(t *testing.T) {
+	t.Parallel()
+	n := 0
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		n++
+		q := r.URL.Query()
+		switch n {
+		case 1:
+			if _, ok := q["index"]; ok {
+				t.Errorf("zero index sent: %v", q)
+			}
+		case 2:
+			if q.Get("index") != "50" {
+				t.Errorf("index %v", q)
+			}
+		case 3:
+			if q.Get("index") != strconv.Itoa(MaxWindow-MaxPageSize) {
+				t.Errorf("window edge %v", q)
+			}
+		}
+		_, _ = w.Write([]byte(`{"data":[],"pagination":{}}`))
+	}))
+	t.Cleanup(srv.Close)
+	c := New(Config{APIKey: "k", BaseURL: srv.URL})
+	if _, err := c.Files(t.Context(), 10, FilesQuery{}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := c.Files(t.Context(), 10, FilesQuery{Index: 50}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := c.Files(t.Context(), 10, FilesQuery{Index: MaxWindow - MaxPageSize}); err != nil {
+		t.Fatalf("index at the window edge: %v", err)
+	}
+	if _, err := c.Files(t.Context(), 10, FilesQuery{Index: MaxWindow - 10}); !errors.Is(err, ErrBeyondWindow) {
+		t.Fatalf("past the window: %v", err)
+	}
+}
+
+func TestModGETHasNoQueryOrBody(t *testing.T) {
+	t.Parallel()
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if strings.Contains(r.URL.RequestURI(), "?") {
+			t.Errorf("GET with a query: %q", r.URL.RequestURI())
+		}
+		if r.Header.Get("Content-Type") != "" {
+			t.Errorf("GET Content-Type %q", r.Header.Get("Content-Type"))
+		}
+		_, _ = w.Write([]byte(`{"data":{"id":10}}`))
+	}))
+	t.Cleanup(srv.Close)
+	if _, err := New(Config{APIKey: "k", BaseURL: srv.URL}).Mod(t.Context(), 10); err != nil {
+		t.Fatal(err)
 	}
 }
 

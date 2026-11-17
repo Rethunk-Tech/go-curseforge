@@ -31,6 +31,13 @@ func TestNewestPrefersStableOnTheReleaseChannel(t *testing.T) {
 	if f, ok := Newest(files[2:3], nil, ReleaseStable); !ok || f.ID != 3 {
 		t.Errorf("with no stable file the newest other one stands in: %d %v", f.ID, ok)
 	}
+	tied := []File{
+		{ID: 6, IsAvailable: true, ReleaseType: ReleaseBeta, FileDate: "2026-06-01"},
+		{ID: 7, IsAvailable: true, ReleaseType: ReleaseBeta, FileDate: "2026-06-01"},
+	}
+	if f, ok := Newest(tied, nil, ReleaseBeta); !ok || f.ID != 6 {
+		t.Errorf("equal dates keep the first: %d %v", f.ID, ok)
+	}
 	if _, ok := Newest(nil, nil, ReleaseStable); ok {
 		t.Error("no files, no newest")
 	}

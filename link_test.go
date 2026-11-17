@@ -15,6 +15,7 @@ func TestParseLink(t *testing.T) {
 	}
 	for _, bad := range []string{
 		"", "curseforge://install", "curseforge://install?addonId=1", "curseforge://install?addonId=0&fileId=2",
+		"curseforge://install?addonId=1&fileId=0",
 		"curseforge://install?addonId=-1&fileId=2", "curseforge://install?addonId=x&fileId=2",
 		"curseforge://install/../x?addonId=1&fileId=2", "curseforge://user@install?addonId=1&fileId=2",
 		"curseforge://install?addonId=1&fileId=2#f", "curseforge://other?addonId=1&fileId=2", "https://install?addonId=1&fileId=2",
