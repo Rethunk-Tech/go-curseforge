@@ -267,6 +267,9 @@ func TestFilesOmitsAZeroIndexAndGuardsTheWindow(t *testing.T) {
 			if _, ok := q["index"]; ok {
 				t.Errorf("zero index sent: %v", q)
 			}
+			if _, ok := q["gameVersion"]; ok {
+				t.Errorf("empty gameVersion sent: %v", q)
+			}
 		case 2:
 			if q.Get("index") != "50" {
 				t.Errorf("index %v", q)
@@ -302,6 +305,11 @@ func TestModGETHasNoQueryOrBody(t *testing.T) {
 		}
 		if r.Header.Get("Content-Type") != "" {
 			t.Errorf("GET Content-Type %q", r.Header.Get("Content-Type"))
+		}
+		var body bytes.Buffer
+		_, _ = body.ReadFrom(r.Body)
+		if body.Len() != 0 {
+			t.Errorf("GET body %q", body.Bytes())
 		}
 		_, _ = w.Write([]byte(`{"data":{"id":10}}`))
 	}))
