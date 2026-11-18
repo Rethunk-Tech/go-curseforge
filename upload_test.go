@@ -102,6 +102,22 @@ func TestUploadNeedsATokenAndAHost(t *testing.T) {
 	}
 }
 
+func TestAuthorFilesURLPointsAtTheProjectFilesPage(t *testing.T) {
+	t.Parallel()
+	if got := AuthorFilesURL(31); got != "https://authors.curseforge.com/#/projects/31/files" {
+		t.Fatalf("got %q", got)
+	}
+}
+
+func TestUploadReportsAMissingFile(t *testing.T) {
+	t.Parallel()
+	_, err := NewUploader(UploadConfig{Token: "t", BaseURL: "https://minecraft.curseforge.com"}).
+		Upload(t.Context(), filepath.Join(t.TempDir(), "gone.zip"), 1, "n", "")
+	if err == nil {
+		t.Fatal("missing zip accepted")
+	}
+}
+
 func TestUploadTimeoutGrowsWithSize(t *testing.T) {
 	t.Parallel()
 	if got := uploadTimeout(0); got != 30*time.Second {

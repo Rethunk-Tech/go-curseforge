@@ -387,6 +387,13 @@ func TestPlainHTTPBaseIsRefusedExceptOnLoopback(t *testing.T) {
 	}
 }
 
+func TestHTTPSOriginIsAcceptedAsAnAPIBase(t *testing.T) {
+	t.Parallel()
+	if err := checkBase("https://api.curseforge.com"); err != nil {
+		t.Fatal(err)
+	}
+}
+
 // The API fills the address in, and the caller fetches it: a plain-http or credentialed address must not come back
 // as a download link, even when the API itself is reached over loopback http.
 func TestDownloadURLRefusesWhatIsNotAnHTTPSAddress(t *testing.T) {
