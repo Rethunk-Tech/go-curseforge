@@ -6,6 +6,10 @@ Notable changes to `go-curseforge`. The format follows
 
 ## [Unreleased]
 
+### Changed
+
+- Requests go through `httpkit.DoJSON`; a 429 from an upload is a `*httpkit.RateLimitError` too, and a malformed upload reply is a decode error.
+
 ### Fixed
 
 - An upload with no deadline is bounded, scaled by file size.
