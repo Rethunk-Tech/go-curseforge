@@ -6,6 +6,14 @@ Notable changes to `go-curseforge`. The format follows
 
 ## [Unreleased]
 
+### Fixed
+
+- An upload with no deadline is bounded, scaled by file size.
+- A link's install host matches without regard to case.
+- An https address with a port but no host is refused.
+- `POST /mods` is skipped when the id list is empty.
+- A negative `Files` index is rejected as beyond the window.
+
 ## [0.4.0] - 2026-11-07
 
 ### Added
