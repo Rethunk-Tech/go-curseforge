@@ -6,6 +6,8 @@ Notable changes to `go-curseforge`. The format follows
 
 ## [Unreleased]
 
+## [0.4.1] - 2026-11-21
+
 ### Changed
 
 - Requests go through `httpkit.DoJSON`; a 429 from an upload is a `*httpkit.RateLimitError` too, and a malformed upload reply is a decode error.
@@ -62,7 +64,8 @@ Notable changes to `go-curseforge`. The format follows
 - `Newest` picks a mod's newest file by release type and game version; `File.SHA1` and `File.Required` read a file.
 - `ParseLink` reads `curseforge://install` links.
 
-[Unreleased]: https://github.com/Rethunk-Tech/go-curseforge/compare/v0.4.0...HEAD
+[Unreleased]: https://github.com/Rethunk-Tech/go-curseforge/compare/v0.4.1...HEAD
+[0.4.1]: https://github.com/Rethunk-Tech/go-curseforge/compare/v0.4.0...v0.4.1
 [0.4.0]: https://github.com/Rethunk-Tech/go-curseforge/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/Rethunk-Tech/go-curseforge/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/Rethunk-Tech/go-curseforge/compare/v0.1.0...v0.2.0
