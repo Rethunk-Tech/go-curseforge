@@ -118,21 +118,20 @@ func (u *Uploader) Upload(ctx context.Context, path string, projectID int, displ
 		return 0, err
 	}
 	req.Header.Set("Content-Type", form.FormDataContentType())
-	req.Header.Set("Accept", "application/json")
 	req.Header.Set("X-Api-Token", u.token)
 	if u.agent != "" {
 		req.Header.Set("User-Agent", u.agent)
 	}
-	reply, err := httpkit.DoCapped(u.hc, req, maxUploadReply, rateLimited)
+	var done struct {
+		ID int `json:"id"`
+	}
+	err = httpkit.DoJSON(u.hc, req, &done, httpkit.JSONOptions{Limit: maxUploadReply})
 	// A refused request leaves the copy above blocked on the pipe until it is closed.
 	_ = pr.CloseWithError(err)
 	if err != nil {
 		return 0, err
 	}
-	var done struct {
-		ID int `json:"id"`
-	}
-	if err := json.Unmarshal(reply, &done); err != nil || done.ID <= 0 {
+	if done.ID <= 0 {
 		return 0, errors.New("curseforge: accepted the file but named no file id")
 	}
 	return done.ID, nil

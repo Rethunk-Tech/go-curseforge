@@ -111,31 +111,11 @@ func (c *Client) do(ctx context.Context, method, path string, params url.Values,
 	if c.agent != "" {
 		req.Header.Set("User-Agent", c.agent)
 	}
-	req.Header.Set("Accept", "application/json")
 	if body != nil {
 		req.Header.Set("Content-Type", "application/json")
 	}
 	req.Header.Set("X-Api-Key", c.key)
-	raw, err := httpkit.DoCapped(c.hc, req, maxBody, rateLimited)
-	if err != nil {
-		return err
-	}
-	if err := json.Unmarshal(raw, out); err != nil {
-		return fmt.Errorf("curseforge: %w", err)
-	}
-	return nil
-}
-
-// rateLimited turns a 429 into a *httpkit.RateLimitError before DoCapped reads its body.
-func rateLimited(resp *http.Response) error {
-	if resp.StatusCode != http.StatusTooManyRequests {
-		return nil
-	}
-	e := &httpkit.RateLimitError{}
-	if t, ok := httpkit.RetryAfter(resp.Header.Get("Retry-After")); ok {
-		e.Reset = t
-	}
-	return e
+	return httpkit.DoJSON(c.hc, req, out, httpkit.JSONOptions{Limit: maxBody})
 }
 
 func (c *Client) get(ctx context.Context, path string, params url.Values, out any) error {
